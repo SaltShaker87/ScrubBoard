@@ -1,0 +1,9 @@
+{
+  "_comment": "All identifiers are invented. structured = must be caught by the Safe Harbor rules alone; contextual = needs the NER model; keep = clinical content that must survive.",
+  "structured": ["Maria Garcia", "4872910", "03/15/1985", "01/20/2024", "01/24/2024", "Henry Okafor",
+                 "62704", "(217) 555-0147", "maria.garcia@example.com", "BCB778421905", "217-555-0199",
+                 "02/07/2024"],
+  "contextual": ["1142 Linden Ave", "Springfield", "Carlos Garcia"],
+  "keep": ["type 2 diabetes mellitus", "hypertension", "metformin 1000 mg BID", "lisinopril 10 mg daily",
+           "38-year-old", "5/5", "3/10", "IL"]
+}

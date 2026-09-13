@@ -1,21 +1,19 @@
-"""Global hotkey helpers. Canonical form: e.g. 'ctrl+shift+c', 'cmd+shift+c'."""
+"""Optional global hotkey (pip install 'privatecopy[hotkey]'): triggers
+"Redact clipboard now". Off by default — copy interception needs no hotkey.
+Canonical form: e.g. 'ctrl+alt+r', 'cmd+shift+r'."""
 from __future__ import annotations
 
-import platform
 from collections.abc import Callable
 
 CANON = {"command": "cmd", "meta": "cmd", "control": "ctrl", "escape": "esc", "return": "enter"}
+MODIFIERS = ("ctrl", "cmd", "alt", "shift")
 
 
 def canonicalize(hotkey: str) -> str:
     parts = [CANON.get(p.strip().lower(), p.strip().lower()) for p in hotkey.split("+") if p.strip()]
-    mods = [p for p in parts if p in ("ctrl", "cmd", "alt", "shift")]
-    keys = [p for p in parts if p not in ("ctrl", "cmd", "alt", "shift")]
+    mods = [p for p in parts if p in MODIFIERS]
+    keys = [p for p in parts if p not in MODIFIERS]
     return "+".join(mods + keys)
-
-
-def default_hotkey() -> str:
-    return "cmd+shift+c" if platform.system() == "Darwin" else "ctrl+shift+c"
 
 
 class HotkeyListener:
@@ -27,25 +25,18 @@ class HotkeyListener:
         self._listener = None
 
     def _to_pynput(self) -> str:
-        from pynput import keyboard
-        mapping = {"ctrl": keyboard.Key.ctrl, "cmd": keyboard.Key.cmd,
-                   "alt": keyboard.Key.alt, "shift": keyboard.Key.shift}
-        parts = []
-        for p in self.hotkey.split("+"):
-            parts.append(f"<{mapping[p].name}>" if p in mapping else p)
-        return "+".join(parts)
+        return "+".join(f"<{p}>" if p in MODIFIERS else p for p in self.hotkey.split("+"))
 
     def start(self) -> None:
         try:
             from pynput import keyboard
         except ImportError as e:
-            raise RuntimeError("global hotkeys need pynput: pip install pynput") from e
-        combo = keyboard.HotKey.parse(self._to_pynput())
-        hot = keyboard.HotKey(combo, lambda: self.callback())
-        lis = keyboard.Listener(on_press=hot.press, on_release=hot.release)
-        lis.daemon = True
-        lis.start()
-        self._listener = lis
+            raise RuntimeError("global hotkeys need pynput: pip install 'privatecopy[hotkey]'") from e
+        hot = keyboard.HotKey(keyboard.HotKey.parse(self._to_pynput()), self.callback)
+        listener = keyboard.Listener(on_press=hot.press, on_release=hot.release)
+        listener.daemon = True
+        listener.start()
+        self._listener = listener
 
     def stop(self) -> None:
         if self._listener is not None:

@@ -1,0 +1,7 @@
+{
+  "structured": ["2024-03-02", "Eleanor Whitfield", "94F", "219-09-9999", "83001", "307-555-0112",
+                 "PM-88412-XQ", "portal.examplehealth.org", "Mar 9", "Priya Raman"],
+  "contextual": ["Jackson", "Ruth Whitfield"],
+  "keep": ["Parkinson's disease", "atrial fibrillation", "apixaban 2.5 mg BID", "CKD stage 3", "BP 132/78",
+           "SpO2 96%", "WY"]
+}

@@ -1,10 +1,9 @@
-; PrivateCopy Windows installer (Inno Setup 6).
-; Build order: python scripts/make_icons.py -> installer/win/build_exe.ps1 -> iscc installer/win/innosetup.iss
-; PyInstaller output expected in ..\..\dist\PrivateCopy\.
+; PrivateCopy Windows installer (Inno Setup 6). Build with installer/win/build_exe.ps1,
+; which produces ..\..\dist\PrivateCopy\ first.
 #define AppVersion "0.1.0"
 
 [Setup]
-AppId={{3A1F7E5A-9C2B-4E6A-9F1A-PRIVATECOPY01}
+AppId={{6E7A2C1B-3F4D-4B8E-9A61-5C2D7E8F9A10}
 AppName=PrivateCopy
 AppVersion={#AppVersion}
 AppPublisher=PrivateCopy contributors
@@ -16,41 +15,32 @@ OutputBaseFilename=PrivateCopy-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+CloseApplications=yes
 SetupIconFile=..\..\assets\privatecopy.ico
-UninstallDisplayIcon={app}\privatecopy.exe
+UninstallDisplayIcon={app}\PrivateCopy.exe
 WizardImageFile=..\..\assets\wizard-image.bmp
 WizardSmallImageFile=..\..\assets\wizard-small.bmp
 
+[Tasks]
+Name: "autostart"; Description: "Start PrivateCopy when I sign in"; GroupDescription: "Startup:"
+Name: "intercept"; Description: "Redact every copy automatically (can be toggled from the tray)"; GroupDescription: "Behavior:"
+Name: "llm"; Description: "Enable the optional local LLM pass (downloads about 400 MB on first start; slower)"; GroupDescription: "Behavior:"; Flags: unchecked
+
 [Files]
-Source: "..\..\dist\PrivateCopy\*"; DestDir: "{app}"; Flags: recursesubdirs
+Source: "..\..\dist\PrivateCopy\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 
 [Icons]
-Name: "{group}\PrivateCopy"; Filename: "{app}\privatecopy.exe"; Parameters: "daemon"
-Name: "{userstartup}\PrivateCopy"; Filename: "{app}\privatecopy.exe"; Parameters: "daemon"
+Name: "{group}\PrivateCopy"; Filename: "{app}\PrivateCopy.exe"
+Name: "{group}\Uninstall PrivateCopy"; Filename: "{uninstallexe}"
+Name: "{userstartup}\PrivateCopy"; Filename: "{app}\PrivateCopy.exe"; Tasks: autostart
 
-[Registry]
-; Optional Explorer file verb (HKCU, no admin)
-Root: HKCU; Subkey: "Software\Classes\*\shell\PrivateCopy"; ValueType: string; ValueData: "PrivateCopy (redact file text)"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\Classes\*\shell\PrivateCopy\command"; ValueType: string; ValueData: """{app}\privatecopy.exe"" run-once --file ""%1"""
+[Run]
+Filename: "{app}\PrivateCopy.exe"; Description: "Start PrivateCopy now"; Flags: postinstall nowait skipifsilent
 
 [Code]
-var
-  HotkeyPage: TWizardPage;
-  HotkeyEdit: TEdit;
-
-function BoolToStr(B: Boolean): String;
+function BoolJson(B: Boolean): String;
 begin
-  if B then Result := 'True' else Result := 'False';
-end;
-
-procedure InitializeWizard;
-begin
-  HotkeyPage := CreateCustomPage(wpSelectTasks, 'Keyboard shortcut',
-    'PrivateCopy trigger (default Ctrl+Shift+C). Keep it or type your own, e.g. Ctrl+Shift+P.');
-  HotkeyEdit := TEdit.Create(WizardForm);
-  HotkeyEdit.Parent := HotkeyPage.Surface;
-  HotkeyEdit.Width := 300;
-  HotkeyEdit.Text := 'ctrl+shift+c';
+  if B then Result := 'true' else Result := 'false';
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -58,9 +48,13 @@ var
   CfgDir, Cfg: String;
 begin
   if CurStep = ssPostInstall then begin
-    CfgDir := ExpandConstant('{userappdata}\..\.privatecopy');
-    ForceDirectories(CfgDir);
-    Cfg := CfgDir + '\hotkey.txt';
-    SaveStringToFile(Cfg, HotkeyEdit.Text, False);
+    { Same location the app reads: %USERPROFILE%\.privatecopy\config.json. Never overwrite on upgrade. }
+    CfgDir := ExpandConstant('{%USERPROFILE}') + '\.privatecopy';
+    Cfg := CfgDir + '\config.json';
+    if not FileExists(Cfg) then begin
+      ForceDirectories(CfgDir);
+      SaveStringToFile(Cfg, '{"intercept_enabled": ' + BoolJson(WizardIsTaskSelected('intercept')) +
+        ', "llm_enabled": ' + BoolJson(WizardIsTaskSelected('llm')) + '}', False);
+    end;
   end;
 end;

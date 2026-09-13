@@ -1,7 +1,0 @@
-[Nemo Action]
-Name=PrivateCopy (redact to clipboard)
-Comment=Redact PII from file text locally, copy result to clipboard
-Exec=python3 /usr/share/privatecopy/privatecopy_nemo.py %F
-Icon-Name=privatecopy
-Selection=any
-Extensions=txt;md;csv;log;

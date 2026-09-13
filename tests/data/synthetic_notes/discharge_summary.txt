@@ -1,0 +1,14 @@
+DISCHARGE SUMMARY
+Patient: Maria Garcia            MRN: 4872910
+DOB: 03/15/1985                  Admit: 01/20/2024   Discharge: 01/24/2024
+Attending: Dr. Henry Okafor, MD
+Address: 1142 Linden Ave, Springfield, IL 62704
+Phone: (217) 555-0147   Email: maria.garcia@example.com
+Insurance: Member ID: BCB778421905
+
+HPI: 38-year-old woman with type 2 diabetes mellitus and hypertension presented with
+chest pain. Troponin negative x2. EKG normal sinus rhythm. She was started on
+metformin 1000 mg BID and lisinopril 10 mg daily. Her husband, Carlos Garcia, can be
+reached at 217-555-0199.
+
+Follow-up with PCP on 02/07/2024. Motor strength 5/5, pain 3/10 at discharge.

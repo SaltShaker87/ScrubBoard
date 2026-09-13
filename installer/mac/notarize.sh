@@ -1,39 +1,34 @@
 #!/bin/bash
-# macOS: stage PrivateCopy.app, codesign, build DMG, notarize. Needs Apple Developer ID.
+# macOS: build PrivateCopy.app (menu-bar only, bundles llama-server), sign every
+# Mach-O inside-out with the hardened runtime, then build + notarize the DMG.
+# Needs: APPLE_DEVELOPER_IDENTITY, APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD.
 set -euo pipefail
-VERSION="${1:-0.1.0}"
 IDENTITY="${APPLE_DEVELOPER_IDENTITY:?set APPLE_DEVELOPER_IDENTITY}"
 STAGE="installer/mac/stage"
 
-echo "-> icons (build .icns from assets/privatecopy-logo.png if needed)"
-if [ ! -f assets/privatecopy.icns ] && [ -f assets/privatecopy-logo.png ]; then
-  (pip install -q pillow && python scripts/make_icons.py) || echo "icon generation skipped"
-fi
+python3 -m pip install -e . pyinstaller
+VERSION="$(python3 -c 'import privatecopy; print(privatecopy.__version__)')"
+python3 installer/fetch_llama.py
+pyinstaller --noconfirm --clean installer/privatecopy.spec
+APP="dist/PrivateCopy.app"
+find "$APP" -name llama-server -exec chmod +x {} +
 
-echo "-> PyInstaller onedir (expects pyproject installed)"
-ICON_ARGS=()
-[ -f assets/privatecopy.icns ] && ICON_ARGS=(--icon assets/privatecopy.icns)
-pyinstaller --noconfirm --clean --onedir --windowed --name PrivateCopy \
-  "${ICON_ARGS[@]}" --add-data "native/mac/Info.plist:." --add-data "assets/privatecopy-logo.png:assets" \
-  -c "from privatecopy.cli import main; main(['daemon'])" 2>/dev/null || \
-pyinstaller --noconfirm --clean --onedir --windowed --name PrivateCopy "${ICON_ARGS[@]}" privatecopy/cli.py
-
-if [ -f assets/privatecopy.icns ]; then
-  echo "-> bundle icon"
-  cp assets/privatecopy.icns dist/PrivateCopy.app/Contents/Resources/PrivateCopy.icns
-fi
-
-echo "-> codesign"
-codesign --deep --force --verify --verbose --sign "$IDENTITY" --options runtime dist/PrivateCopy.app
+echo "-> codesign (nested code first)"
+find "$APP/Contents" -type f \( -name "*.dylib" -o -name "*.so" -o -name "llama-server" \) -print0 |
+  xargs -0 -n1 codesign --force --options runtime --timestamp --sign "$IDENTITY"
+codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP"
+codesign --verify --strict --verbose=2 "$APP"
 
 echo "-> DMG"
-mkdir -p "$STAGE" dist/dmg
-cp -R dist/PrivateCopy.app "$STAGE/"
+rm -rf "$STAGE" && mkdir -p "$STAGE" dist/dmg
+cp -R "$APP" "$STAGE/"
 ln -sfn /Applications "$STAGE/Applications"
-hdiutil create -volname "PrivateCopy $VERSION" -srcfolder "$STAGE" -ov -format UDZO "dist/dmg/PrivateCopy-$VERSION.dmg"
+DMG="dist/dmg/PrivateCopy-$VERSION.dmg"
+hdiutil create -volname "PrivateCopy $VERSION" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+codesign --force --timestamp --sign "$IDENTITY" "$DMG"
 
 echo "-> notarize"
-xcrun notarytool submit "dist/dmg/PrivateCopy-$VERSION.dmg" --wait \
+xcrun notarytool submit "$DMG" --wait \
   --apple-id "${APPLE_ID:?}" --team-id "${APPLE_TEAM_ID:?}" --password "${APPLE_APP_PASSWORD:?}"
-xcrun stapler staple "dist/dmg/PrivateCopy-$VERSION.dmg"
-echo OK
+xcrun stapler staple "$DMG"
+echo "OK: $DMG"

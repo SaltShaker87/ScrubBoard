@@ -9,9 +9,8 @@ build/
 Thumbs.db
 # Local runtime data (models, config) - never commit real user data
 .privatecopy-test/
-# PyInstaller output
-*.spec
-# Installer staging
+# Installer staging / bundled runtime
+installer/build/
 installer/win/Output/
 installer/mac/stage/
 installer/linux/stage/
@@ -20,4 +19,5 @@ installer/linux/stage/
 *.onnx_data
 *.safetensors
 *.bin
+*.gguf
 models-cache/

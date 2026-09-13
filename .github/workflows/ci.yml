@@ -2,16 +2,41 @@ name: ci
 on:
   push:
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * *"  # nightly recall gate
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-14]
+        python: ["3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    env:
+      # Real clipboard round trips on runners whose clipboard is disposable.
+      PRIVATECOPY_CLIPBOARD_TESTS: ${{ matrix.os != 'ubuntu-22.04' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ matrix.python }}" }
+      - run: python -m pip install -e ".[dev]"
+      - run: ruff check privatecopy tests scripts installer
+      - run: pytest -q
+
+  recall:
+    # Downloads the OpenMed model and fails if any gold identifier in the
+    # synthetic notes survives rules + NER.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
-      - run: pip install -e ".[dev]" || pip install pytest
-      - run: pytest -q
+      - run: python -m pip install -e .
+      - run: privatecopy download-model --ner openmed-44m
+      - run: python scripts/eval_recall.py --ner openmed-44m --fail-on-miss
 
   build:
     needs: test
@@ -23,21 +48,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
-      - run: pip install -e . pyinstaller pillow
-      - run: python scripts/make_icons.py || echo "no logo yet, skipping icons"
-      - run: pyinstaller --noconfirm --clean --onedir --name privatecopy privatecopy/cli.py
+      - run: python -m pip install -e . pyinstaller
+      - run: python installer/fetch_llama.py
+      - run: pyinstaller --noconfirm --clean installer/privatecopy.spec
       - uses: actions/upload-artifact@v4
-        with: { name: privatecopy-${{ matrix.os }}, path: dist/ }
-
-  release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Write latest.json
-        run: |
-          VER="${GITHUB_REF#refs/tags/v}"
-          printf '{"version":"%s","notes":"See releases page.","assets":{"windows":"","macos":"","linux":""}}' "$VER" > latest.json
-      - uses: softprops/action-gh-release@v2
-        with: { files: "latest.json" }
+        with: { name: "privatecopy-${{ matrix.os }}", path: dist/ }
