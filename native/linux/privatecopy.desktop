@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PrivateCopy
+Comment=Redact PII from selected text, locally
+Exec=privatecopy daemon
+Icon=privatecopy
+Terminal=false
+Categories=Utility;Security;
+StartupNotify=false

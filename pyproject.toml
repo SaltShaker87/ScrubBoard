@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "privatecopy"
+version = "0.1.0"
+description = "PrivateCopy: select text, press hotkey, get PII-redacted text back on your clipboard. 100% local."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "PrivateCopy contributors" }]
+dependencies = [
+  "huggingface_hub>=0.23",
+  "onnxruntime>=1.18",
+  "tokenizers>=0.19",
+  "pyperclip>=1.8",
+  "pynput>=1.7",
+  "pystray>=0.19",
+  "plyer>=2.1",
+  "pillow>=10",
+]
+[project.optional-dependencies]
+openmed = ["optimum[onnx]>=1.20", "transformers>=4.40", "torch>=2.2"]
+gliner = ["gliner>=0.2.24", "onnx>=1.16"]
+dev = ["pytest>=8", "ruff>=0.4"]
+all = ["optimum[onnx]>=1.20", "transformers>=4.40", "torch>=2.2", "gliner>=0.2.24", "onnx>=1.16"]
+
+[project.scripts]
+privatecopy = "privatecopy.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["privatecopy*"]
+
+[tool.ruff]
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

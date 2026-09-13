@@ -1,0 +1,23 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.DS_Store
+Thumbs.db
+# Local runtime data (models, config) - never commit real user data
+.privatecopy-test/
+# PyInstaller output
+*.spec
+# Installer staging
+installer/win/Output/
+installer/mac/stage/
+installer/linux/stage/
+# Downloaded weights - never commit
+*.onnx
+*.onnx_data
+*.safetensors
+*.bin
+models-cache/

@@ -1,0 +1,43 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -e ".[dev]" || pip install pytest
+      - run: pytest -q
+
+  build:
+    needs: test
+    strategy:
+      matrix:
+        os: [windows-latest, macos-14, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -e . pyinstaller pillow
+      - run: python scripts/make_icons.py || echo "no logo yet, skipping icons"
+      - run: pyinstaller --noconfirm --clean --onedir --name privatecopy privatecopy/cli.py
+      - uses: actions/upload-artifact@v4
+        with: { name: privatecopy-${{ matrix.os }}, path: dist/ }
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write latest.json
+        run: |
+          VER="${GITHUB_REF#refs/tags/v}"
+          printf '{"version":"%s","notes":"See releases page.","assets":{"windows":"","macos":"","linux":""}}' "$VER" > latest.json
+      - uses: softprops/action-gh-release@v2
+        with: { files: "latest.json" }
