@@ -1,0 +1,10 @@
+#!/bin/sh
+# Runs as root after the files are in /Applications. Refresh the logged-in user's
+# Services menu (so right-click → Services shows Scrubboard) and start the app.
+CONSOLE_USER=$(stat -f %Su /dev/console)
+if [ -n "$CONSOLE_USER" ] && [ "$CONSOLE_USER" != "root" ]; then
+  CONSOLE_UID=$(id -u "$CONSOLE_USER")
+  launchctl asuser "$CONSOLE_UID" sudo -u "$CONSOLE_USER" /System/Library/CoreServices/pbs -update || true
+  launchctl asuser "$CONSOLE_UID" sudo -u "$CONSOLE_USER" open -a /Applications/Scrubboard.app || true
+fi
+exit 0

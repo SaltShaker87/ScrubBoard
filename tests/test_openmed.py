@@ -3,7 +3,7 @@ import re
 
 import numpy as np
 
-from privatecopy.models.openmed import OpenMedONNXModel
+from scrubboard.models.openmed import OpenMedONNXModel
 
 
 class FakeEncoding:

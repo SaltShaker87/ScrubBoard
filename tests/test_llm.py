@@ -4,11 +4,11 @@ import time
 
 import pytest
 
-from privatecopy.config import PrivateCopyConfig
-from privatecopy.llm import create_llm_engine
-from privatecopy.llm.engine import LLMEngine, chunk_text, map_to_entities, parse_inline_tags, parse_json_spans
-from privatecopy.llm.runtime import ChatClient, LlamaServer
-from privatecopy.models.manifest import LLM_CATALOG
+from scrubboard.config import ScrubboardConfig
+from scrubboard.llm import create_llm_engine
+from scrubboard.llm.engine import LLMEngine, chunk_text, map_to_entities, parse_inline_tags, parse_json_spans
+from scrubboard.llm.runtime import ChatClient, LlamaServer
+from scrubboard.models.manifest import LLM_CATALOG
 
 FAKE_SERVER = os.path.join(os.path.dirname(__file__), "fake_llama_server.py")
 QWEN = LLM_CATALOG["qwen3-0.6b-pii-q4km"]
@@ -101,7 +101,7 @@ def test_idle_unload(tmp_path):
 
 
 def test_create_engine_reports_missing_pieces(tmp_path):
-    cfg = PrivateCopyConfig(models_dir=str(tmp_path), llm_server_path=str(tmp_path / "nope"))
+    cfg = ScrubboardConfig(models_dir=str(tmp_path), llm_server_path=str(tmp_path / "nope"))
     with pytest.raises(FileNotFoundError, match="download-model --llm"):
         create_llm_engine(cfg)
     model = tmp_path / "llm" / QWEN["file"]

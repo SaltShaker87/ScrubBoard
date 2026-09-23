@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scrubboard</title>
+<meta name="description" content="Removes patient details from copied text before you paste it. Free, and runs only on your computer.">
+<link rel="icon" href="scrubboard-256.png">
+<!-- Generated from docs/site/index.template.html by installer/render_texts.py --site. -->
+<style>
+  :root {
+    --bg: #f6faf9; --card: #ffffff; --ink: #1d2b2a; --muted: #52625f; --line: #d9e5e3;
+    --brand: #0f6b66; --brand-ink: #ffffff; --warn-bg: #fff6e0; --warn-line: #f0d48a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1716; --card: #16211f; --ink: #e4efed; --muted: #9db2ae; --line: #27413d;
+      --brand: #2bb3a8; --brand-ink: #06201e; --warn-bg: #2a2413; --warn-line: #6b5a24;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1716; --card: #16211f; --ink: #e4efed; --muted: #9db2ae; --line: #27413d;
+    --brand: #2bb3a8; --brand-ink: #06201e; --warn-bg: #2a2413; --warn-line: #6b5a24;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 17px/1.6 -apple-system, "Segoe UI", Ubuntu, Roboto, sans-serif; }
+  main { max-width: 44rem; margin: 0 auto; padding: 2.5rem 16px 4rem; }
+  header { display: flex; align-items: center; gap: 1rem; }
+  header img { width: 72px; height: 72px; }
+  h1 { margin: 0; font-size: 2rem; }
+  .tagline { margin: .1rem 0 0; color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+          padding: 1.25rem 1.5rem; margin-top: 1.5rem; }
+  .download { text-align: center; }
+  .btn { display: inline-block; background: var(--brand); color: var(--brand-ink); text-decoration: none;
+         font-weight: 600; font-size: 1.15rem; padding: .85rem 1.6rem; border-radius: 10px; }
+  .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  .small { color: var(--muted); font-size: .92rem; }
+  .others a { color: var(--brand); }
+  .warn { background: var(--warn-bg); border-color: var(--warn-line); }
+  h2 { font-size: 1.2rem; margin: 0 0 .5rem; }
+  ol { padding-left: 1.3rem; }
+  code.ex { display: block; white-space: pre-wrap; font-size: .9rem; background: var(--bg);
+            border: 1px solid var(--line); border-radius: 8px; padding: .6rem .8rem; margin: .3rem 0; }
+  details summary { cursor: pointer; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="scrubboard-256.png" alt="">
+    <div>
+      <h1>Scrubboard</h1>
+      <p class="tagline">Clean patient details out of copied text, before you paste it.</p>
+    </div>
+  </header>
+
+  <section class="card download">
+    <a class="btn" id="dl" href="#other">Download Scrubboard</a>
+    <p class="small" id="dl-note">Free. About 500 MB, because the privacy detector is included, so nothing else needs to download.</p>
+    <p class="small others" id="other">
+      Other computers:
+      <a data-asset="Scrubboard-Setup.exe" href="#">Windows 10/11</a> ·
+      <a data-asset="Scrubboard.pkg" href="#">Mac (Apple silicon, macOS 12+)</a> ·
+      <a data-asset="scrubboard_amd64.deb" href="#">Ubuntu 22.04+</a>
+    </p>
+  </section>
+
+  <section class="card">{{WELCOME}}</section>
+
+  <section class="card">
+    <h2>How to use it</h2>
+    <ol>
+      <li>Copy text as usual.</li>
+      <li>Click the Scrubboard icon and choose <b>Clean my clipboard</b>. On a Mac you can also
+          right-click selected text and choose Services, then <b>{{SERVICE_TITLE}}</b>.</li>
+      <li>Paste. <b>Read the cleaned text before you send it.</b></li>
+    </ol>
+    <p>Before:</p><code class="ex">{{EXAMPLE_BEFORE}}</code>
+    <p>After:</p><code class="ex">{{EXAMPLE_AFTER}}</code>
+  </section>
+
+  <section class="card warn">{{DISCLAIMER}}</section>
+
+  <section class="card">
+    <details>
+      <summary>Installing on Windows: "Windows protected your PC"?</summary>
+      <p>Scrubboard isn't code-signed on Windows yet, so Windows shows this warning the first time.
+         Click <b>More info</b>, then <b>Run anyway</b>. The installer doesn't need administrator rights.</p>
+    </details>
+    <details>
+      <summary>Installing on Ubuntu</summary>
+      <p>Double-click the downloaded file. It opens in App Center; click <b>Install</b>. Then open
+         Scrubboard from the app grid. It walks you through a short welcome the first time.</p>
+    </details>
+    <details>
+      <summary>Privacy</summary>
+      <p>Scrubboard never sends your text anywhere. It has no accounts and no tracking, and it doesn't
+         keep a record of what you copy. It works without an internet connection.</p>
+    </details>
+  </section>
+</main>
+<script>
+  // GitHub Pages lives at https://OWNER.github.io/REPO/: point at that repo's latest release.
+  (function () {
+    var host = location.hostname, parts = location.pathname.split("/").filter(Boolean);
+    var repo = host.endsWith(".github.io") && parts.length ? host.split(".")[0] + "/" + parts[0] : null;
+    var base = repo ? "https://github.com/" + repo + "/releases/latest/download/" : null;
+    document.querySelectorAll("a[data-asset]").forEach(function (a) {
+      a.href = base ? base + a.dataset.asset : "#other";
+    });
+    var ua = navigator.userAgent, pick = null, label = null;
+    if (/Windows/i.test(ua)) { pick = "Scrubboard-Setup.exe"; label = "Download for Windows"; }
+    else if (/Macintosh|Mac OS X/i.test(ua)) { pick = "Scrubboard.pkg"; label = "Download for Mac"; }
+    else if (/Linux/i.test(ua) && !/Android/i.test(ua)) { pick = "scrubboard_amd64.deb"; label = "Download for Ubuntu"; }
+    var btn = document.getElementById("dl");
+    if (pick && base) { btn.href = base + pick; btn.textContent = label; }
+    else if (!pick) {
+      btn.textContent = "Choose your computer below";
+      document.getElementById("dl-note").textContent =
+        "Scrubboard runs on Windows, Mac and Ubuntu computers, not on phones or tablets.";
+    }
+  })();
+</script>
+</body>
+</html>

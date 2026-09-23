@@ -1,9 +1,9 @@
 import pytest
 
-from privatecopy.config import PrivateCopyConfig
-from privatecopy.models.base import PIIModel
-from privatecopy.pipeline import NotProtectedError, RedactionPipeline
-from privatecopy.redact import Entity
+from scrubboard.config import ScrubboardConfig
+from scrubboard.models.base import PIIModel
+from scrubboard.pipeline import NotProtectedError, RedactionPipeline
+from scrubboard.redact import Entity
 
 
 class FakeNER(PIIModel):
@@ -41,8 +41,8 @@ class FakeLLM:
         return [Entity(s, s + 5, "first_name", 0.8)] if s >= 0 else []
 
 
-def cfg(**kw) -> PrivateCopyConfig:
-    return PrivateCopyConfig(ner_model="openmed-44m", **kw)
+def cfg(**kw) -> ScrubboardConfig:
+    return ScrubboardConfig(ner_model="openmed-44m", **kw)
 
 
 def test_rules_and_ner_combine():
@@ -60,20 +60,20 @@ def test_missing_model_is_not_protected(tmp_path):
 
 
 def test_rules_only_must_be_explicit():
-    r = RedactionPipeline(PrivateCopyConfig(ner_model="none")).redact("SSN 123-45-6789")
+    r = RedactionPipeline(ScrubboardConfig(ner_model="none")).redact("SSN 123-45-6789")
     assert r.text == "SSN [SSN]"
     assert r.engines == ["rules"]
 
 
 def test_phi_at_end_of_long_text_is_redacted():
     text = "note " * 3900 + "SSN 123-45-6789"
-    r = RedactionPipeline(PrivateCopyConfig(ner_model="none")).redact(text)
+    r = RedactionPipeline(ScrubboardConfig(ner_model="none")).redact(text)
     assert "123-45-6789" not in r.text
     assert not r.truncated
 
 
 def test_over_limit_text_is_truncated_visibly():
-    r = RedactionPipeline(PrivateCopyConfig(ner_model="none", max_chars=100)).redact("x" * 150)
+    r = RedactionPipeline(ScrubboardConfig(ner_model="none", max_chars=100)).redact("x" * 150)
     assert r.truncated
     assert r.text.startswith("x" * 100)
     assert "truncated at 100" in r.text

@@ -8,7 +8,7 @@ import tempfile
 
 import pytest
 
-from privatecopy.watchers.gnome_ipc import GnomeIPCServer
+from scrubboard.watchers.gnome_ipc import GnomeIPCServer
 
 pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="Unix sockets only")
 

@@ -2,10 +2,10 @@ import threading
 
 import pytest
 
-from privatecopy.config import PrivateCopyConfig
-from privatecopy.intercept import FAILED, PLACEHOLDER, InterceptController
-from privatecopy.pipeline import NotProtectedError, RedactionResult
-from privatecopy.watchers.base import ClipboardBackend, ClipboardEvent
+from scrubboard.config import ScrubboardConfig
+from scrubboard.intercept import FAILED, PLACEHOLDER, InterceptController
+from scrubboard.pipeline import NotProtectedError, RedactionResult
+from scrubboard.watchers.base import ClipboardBackend, ClipboardEvent
 
 
 class FakeBackend(ClipboardBackend):
@@ -56,7 +56,8 @@ def notes():
 
 def make(redactor, notes, **cfg):
     backend = FakeBackend()
-    ctl = InterceptController(backend, redactor, PrivateCopyConfig(**cfg),
+    cfg.setdefault("intercept_enabled", True)  # these tests exercise auto-clean
+    ctl = InterceptController(backend, redactor, ScrubboardConfig(**cfg),
                               notify=lambda title, msg: notes.append(msg))
     ctl.start()
     return backend, ctl
@@ -146,7 +147,16 @@ def test_redact_now_works_with_intercept_off(notes):
     ctl.redact_now()
     assert ctl.wait_idle()
     assert backend.content == "RAW TEXT"
-    assert any("Redacted 1 item" in n for n in notes)
+    assert any("Redacted 1 identifying detail" in n for n in notes)
+
+
+def test_manual_clean_always_confirms(notes):
+    backend, ctl = make(GatedRedactor(), notes, intercept_enabled=False)
+    for _ in range(2):
+        backend.content = "raw text"
+        ctl.redact_now()
+        assert ctl.wait_idle()
+    assert sum("Redacted 1 identifying detail" in n for n in notes) == 2
 
 
 def test_ipc_handler(notes):

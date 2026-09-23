@@ -2,14 +2,14 @@ import datetime as dt
 
 import pytest
 
-from privatecopy.config import PrivateCopyConfig
-from privatecopy.pipeline import RedactionPipeline
-from privatecopy.redact import Entity
-from privatecopy.safe_harbor import SafeHarborPolicy
+from scrubboard.config import ScrubboardConfig
+from scrubboard.pipeline import RedactionPipeline
+from scrubboard.redact import Entity
+from scrubboard.safe_harbor import SafeHarborPolicy
 
 
 def redact(text: str, **cfg) -> str:
-    return RedactionPipeline(PrivateCopyConfig(ner_model="none", **cfg)).redact(text).text
+    return RedactionPipeline(ScrubboardConfig(ner_model="none", **cfg)).redact(text).text
 
 
 # (text, identifier that must disappear, placeholder that must appear)

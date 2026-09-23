@@ -3,13 +3,13 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "privatecopy"
+name = "scrubboard"
 version = "0.1.0"
-description = "PrivateCopy: removes HIPAA Safe Harbor identifiers from everything you copy. 100% local."
+description = "Scrubboard: removes patient identifiers (HIPAA Safe Harbor) from copied text before you paste it. 100% local."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "PrivateCopy contributors" }]
+authors = [{ name = "Scrubboard contributors" }]
 dependencies = [
   "onnxruntime>=1.18",
   "tokenizers>=0.19",
@@ -18,6 +18,8 @@ dependencies = [
   "pillow>=10",
   "psutil>=5.9",
   "certifi",
+  "truststore>=0.9",
+  "pyobjc-framework-ServiceManagement>=10; sys_platform == 'darwin'",
   "pyobjc-framework-Cocoa>=10; sys_platform == 'darwin'",
   "python-xlib>=0.33; sys_platform == 'linux'",
 ]
@@ -28,11 +30,11 @@ hotkey = ["pynput>=1.7"]
 dev = ["pytest>=8", "ruff>=0.4"]
 
 [project.scripts]
-privatecopy = "privatecopy.cli:main"
+scrubboard = "scrubboard.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["privatecopy*"]
+include = ["scrubboard*"]
 
 [tool.ruff]
 target-version = "py311"

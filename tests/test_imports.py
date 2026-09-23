@@ -5,14 +5,14 @@ import importlib
 import pathlib
 import pkgutil
 
-import privatecopy
+import scrubboard
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SKIP_DIRS = {".venv", "venv", "build", "dist", "node_modules", ".git"}
 
 
 def test_every_module_imports():
-    for info in pkgutil.walk_packages(privatecopy.__path__, "privatecopy."):
+    for info in pkgutil.walk_packages(scrubboard.__path__, "scrubboard."):
         importlib.import_module(info.name)
 
 

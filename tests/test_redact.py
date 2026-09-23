@@ -1,4 +1,4 @@
-from privatecopy.redact import (
+from scrubboard.redact import (
     Entity,
     expand_to_word_boundaries,
     placeholder_for,

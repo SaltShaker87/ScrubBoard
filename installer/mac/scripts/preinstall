@@ -1,0 +1,4 @@
+#!/bin/sh
+# Upgrade: quit a running Scrubboard so its files can be replaced.
+pkill -x Scrubboard 2>/dev/null || true
+exit 0

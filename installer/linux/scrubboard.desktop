@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Scrubboard
+GenericName=Patient-detail remover
+Comment=Removes patient details from copied text before you paste it. Runs only on this computer.
+Exec=scrubboard
+Icon=scrubboard
+Terminal=false
+Categories=Utility;Office;
+Keywords=PHI;HIPAA;redact;clipboard;privacy;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

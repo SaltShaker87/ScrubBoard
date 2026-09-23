@@ -1,0 +1,79 @@
+# Builds the three installers on a version tag and publishes them as a GitHub Release with
+# stable names, so the download page can link to releases/latest/download/<name>.
+#   git tag v0.1.0 && git push origin v0.1.0
+#
+# Secrets (macOS signing is required; Windows signing is optional):
+#   MACOS_CERTS_P12         base64 .p12 holding BOTH "Developer ID Application" and
+#                           "Developer ID Installer" certificates + private keys
+#   MACOS_CERTS_PASSWORD    password for that .p12
+#   APPLE_DEVELOPER_IDENTITY  e.g. "Developer ID Application: Jane Doe (TEAMID)"
+#   APPLE_INSTALLER_IDENTITY  e.g. "Developer ID Installer: Jane Doe (TEAMID)"
+#   APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD   notarization (app-specific password)
+name: release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: choco install innosetup -y --no-progress
+      - run: powershell -ExecutionPolicy Bypass -File installer/win/build_exe.ps1
+      - uses: actions/upload-artifact@v4
+        with: { name: windows, path: dist/Scrubboard-Setup.exe }
+
+  macos:
+    runs-on: macos-14  # Apple silicon
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.MACOS_CERTS_P12 }}
+          p12-password: ${{ secrets.MACOS_CERTS_PASSWORD }}
+      - run: installer/mac/build_pkg.sh
+        env:
+          PYTHON: python
+          APPLE_DEVELOPER_IDENTITY: ${{ secrets.APPLE_DEVELOPER_IDENTITY }}
+          APPLE_INSTALLER_IDENTITY: ${{ secrets.APPLE_INSTALLER_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        with: { name: macos, path: dist/Scrubboard.pkg }
+
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby-dev rpm libgirepository1.0-dev libcairo2-dev gir1.2-ayatanaappindicator3-0.1
+          sudo gem install --no-document fpm
+      - run: installer/linux/build_linux.sh
+      - uses: actions/upload-artifact@v4
+        with: { name: linux, path: "dist/scrubboard_amd64.deb" }
+
+  publish:
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: out, merge-multiple: true }
+      - run: cd out && sha256sum * > SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: out/*
+          draft: ${{ github.event_name == 'workflow_dispatch' }}
+          generate_release_notes: true

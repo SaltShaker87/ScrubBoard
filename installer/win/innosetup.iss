@@ -1,60 +1,58 @@
-; PrivateCopy Windows installer (Inno Setup 6). Build with installer/win/build_exe.ps1,
-; which produces ..\..\dist\PrivateCopy\ first.
-#define AppVersion "0.1.0"
+; Scrubboard Windows installer (Inno Setup 6.3+). Build with installer/win/build_exe.ps1,
+; which first produces ..\..\dist\Scrubboard\ and ..\build\text\win\ (installer/render_texts.py).
+; All wording lives in scrubboard/texts.py; edit it there, not here.
+#ifndef AppVersion
+  #define AppVersion "0.1.0"
+#endif
 
 [Setup]
-AppId={{6E7A2C1B-3F4D-4B8E-9A61-5C2D7E8F9A10}
-AppName=PrivateCopy
+AppId={{3B8F1D52-7C6A-4E0B-9F2D-5A1C8E4B7D63}
+AppName=Scrubboard
 AppVersion={#AppVersion}
-AppPublisher=PrivateCopy contributors
-DefaultDirName={autopf}\PrivateCopy
-DefaultGroupName=PrivateCopy
+AppPublisher=Scrubboard contributors
+AppComments=Removes patient identifiers from copied text before you paste it. Runs only on this computer.
+DefaultDirName={autopf}\Scrubboard
+DefaultGroupName=Scrubboard
+DisableProgramGroupPage=yes
+DisableDirPage=yes
+DisableWelcomePage=no
 PrivilegesRequired=lowest
 OutputDir=Output
-OutputBaseFilename=PrivateCopy-Setup-{#AppVersion}
+OutputBaseFilename=Scrubboard-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-CloseApplications=yes
-SetupIconFile=..\..\assets\privatecopy.ico
-UninstallDisplayIcon={app}\PrivateCopy.exe
+WizardSizePercent=120
+; Offer to close a running Scrubboard automatically before upgrading or removing it.
+CloseApplications=force
+SetupIconFile=..\..\assets\scrubboard.ico
+UninstallDisplayIcon={app}\Scrubboard.exe
+UninstallDisplayName=Scrubboard
 WizardImageFile=..\..\assets\wizard-image.bmp
 WizardSmallImageFile=..\..\assets\wizard-small.bmp
+LicenseFile=..\build\text\win\disclaimer.txt
+InfoBeforeFile=..\build\text\win\howto.txt
+
+#include "..\build\text\win\messages.iss"
 
 [Tasks]
-Name: "autostart"; Description: "Start PrivateCopy when I sign in"; GroupDescription: "Startup:"
-Name: "intercept"; Description: "Redact every copy automatically (can be toggled from the tray)"; GroupDescription: "Behavior:"
-Name: "llm"; Description: "Enable the optional local LLM pass (downloads about 400 MB on first start; slower)"; GroupDescription: "Behavior:"; Flags: unchecked
+Name: "desktopicon"; Description: "Put a Scrubboard shortcut on my desktop"; GroupDescription: "Shortcuts:"
+Name: "autostart"; Description: "Start Scrubboard by itself when I sign in to Windows (recommended)"; GroupDescription: "Shortcuts:"
+Name: "nohistory"; Description: "Turn off Windows clipboard history (recommended). Otherwise Windows keeps its own copy of everything you copy, including the original text before Scrubboard cleans it. You can turn it back on in Settings > System > Clipboard."; GroupDescription: "Privacy:"
 
 [Files]
-Source: "..\..\dist\PrivateCopy\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
+Source: "..\..\dist\Scrubboard\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 
 [Icons]
-Name: "{group}\PrivateCopy"; Filename: "{app}\PrivateCopy.exe"
-Name: "{group}\Uninstall PrivateCopy"; Filename: "{uninstallexe}"
-Name: "{userstartup}\PrivateCopy"; Filename: "{app}\PrivateCopy.exe"; Tasks: autostart
+Name: "{autoprograms}\Scrubboard"; Filename: "{app}\Scrubboard.exe"; Comment: "Clean patient details out of copied text"
+Name: "{autodesktop}\Scrubboard"; Filename: "{app}\Scrubboard.exe"; Tasks: desktopicon; Comment: "Clean patient details out of copied text"
+Name: "{userstartup}\Scrubboard"; Filename: "{app}\Scrubboard.exe"; Tasks: autostart
+
+[Registry]
+Root: HKCU; Subkey: "Software\Microsoft\Clipboard"; ValueType: dword; ValueName: "EnableClipboardHistory"; ValueData: 0; Tasks: nohistory
 
 [Run]
-Filename: "{app}\PrivateCopy.exe"; Description: "Start PrivateCopy now"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\Scrubboard.exe"; Description: "Start Scrubboard now"; Flags: postinstall nowait skipifsilent
 
-[Code]
-function BoolJson(B: Boolean): String;
-begin
-  if B then Result := 'true' else Result := 'false';
-end;
-
-procedure CurStepChanged(CurStep: TSetupStep);
-var
-  CfgDir, Cfg: String;
-begin
-  if CurStep = ssPostInstall then begin
-    { Same location the app reads: %USERPROFILE%\.privatecopy\config.json. Never overwrite on upgrade. }
-    CfgDir := ExpandConstant('{%USERPROFILE}') + '\.privatecopy';
-    Cfg := CfgDir + '\config.json';
-    if not FileExists(Cfg) then begin
-      ForceDirectories(CfgDir);
-      SaveStringToFile(Cfg, '{"intercept_enabled": ' + BoolJson(WizardIsTaskSelected('intercept')) +
-        ', "llm_enabled": ' + BoolJson(WizardIsTaskSelected('llm')) + '}', False);
-    end;
-  end;
-end;
+[UninstallRun]
+Filename: "{cmd}"; Parameters: "/C taskkill /IM Scrubboard.exe /F"; Flags: runhidden; RunOnceId: "StopScrubboard"

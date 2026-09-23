@@ -19,9 +19,9 @@ import time
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from privatecopy.config import NER_MODELS, PrivateCopyConfig  # noqa: E402
-from privatecopy.models.manifest import LLM_CATALOG  # noqa: E402
-from privatecopy.pipeline import RedactionPipeline  # noqa: E402
+from scrubboard.config import NER_MODELS, ScrubboardConfig  # noqa: E402
+from scrubboard.models.manifest import LLM_CATALOG  # noqa: E402
+from scrubboard.pipeline import RedactionPipeline  # noqa: E402
 
 NOTES_DIR = ROOT / "tests" / "data" / "synthetic_notes"
 
@@ -33,12 +33,12 @@ def main() -> int:
     parser.add_argument("--fail-on-miss", action="store_true")
     args = parser.parse_args()
 
-    cfg = PrivateCopyConfig.load()
+    cfg = ScrubboardConfig.load()
     if args.ner:
         cfg.ner_model = args.ner
     llm = None
     if args.llm:
-        from privatecopy.llm import create_llm_engine
+        from scrubboard.llm import create_llm_engine
         cfg.llm_model, cfg.llm_enabled, cfg.llm_timeout_s = args.llm, True, 120.0
         llm = create_llm_engine(cfg)
     pipeline = RedactionPipeline(cfg, llm=llm)

@@ -1,7 +1,8 @@
 # Third-party components
 
-Model weights are downloaded at runtime, never bundled. A `NOTICE.txt` next to each
-download records its source commit and license.
+The default NER model (OpenMed, Apache-2.0) is bundled in the installers so users never
+download anything. The optional models are downloaded only when a user turns them on. A
+`NOTICE.txt` next to each model (bundled or downloaded) records its source commit and license.
 
 **Models**
 * `OpenMed/OpenMed-PII-SuperClinical-Small-44M-v1-onnx-android` (default NER) — Apache-2.0.
@@ -19,6 +20,7 @@ download records its source commit and license.
 * llama.cpp `llama-server` (bundled in installers, pinned build `b10941`) — MIT.
   <https://github.com/ggml-org/llama.cpp>
 * ONNX Runtime — MIT. Hugging Face `tokenizers` — Apache-2.0. `pystray` — LGPL-3.0.
+  truststore — MIT. certifi — MPL-2.0. PyGObject (Linux builds) — LGPL-2.1.
   Pillow — MIT-CMU. psutil — BSD-3. PyObjC (macOS) — MIT. python-xlib (Linux) — LGPL-2.1.
 
-PrivateCopy's own code is MIT (`LICENSE-MIT`).
+Scrubboard's own code is MIT (`LICENSE-MIT`).

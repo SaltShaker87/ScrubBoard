@@ -1,19 +1,19 @@
 """Real system-clipboard round trips. These overwrite the clipboard, so they only
-run when PRIVATECOPY_CLIPBOARD_TESTS=1 (CI sets it; runners' clipboards are disposable)."""
+run when SCRUBBOARD_CLIPBOARD_TESTS=1 (CI sets it; runners' clipboards are disposable)."""
 import os
 import threading
 
 import pytest
 
-from privatecopy.watchers import create_backend, detect_backend_name
+from scrubboard.watchers import create_backend, detect_backend_name
 
-pytestmark = pytest.mark.skipif(os.environ.get("PRIVATECOPY_CLIPBOARD_TESTS") != "1",
-                                reason="set PRIVATECOPY_CLIPBOARD_TESTS=1 to touch the real clipboard")
+pytestmark = pytest.mark.skipif(os.environ.get("SCRUBBOARD_CLIPBOARD_TESTS") != "1",
+                                reason="set SCRUBBOARD_CLIPBOARD_TESTS=1 to touch the real clipboard")
 
 
 def test_write_read_roundtrip():
     backend = create_backend()
-    text = "PrivateCopy test ünïcödé ✓ 123"
+    text = "Scrubboard test ünïcödé ✓ 123"
     backend.write_text(text)
     assert backend.read_text() == text
 

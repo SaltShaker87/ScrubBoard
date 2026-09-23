@@ -1,0 +1,7 @@
+{
+  "uuid": "scrubboard@scrubboard.github.io",
+  "name": "Scrubboard",
+  "description": "Sends text you copy to the local Scrubboard app, which removes HIPAA Safe Harbor identifiers before you paste. Nothing leaves this computer. Requires the Scrubboard app to be running.",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "version": 1
+}

@@ -16,13 +16,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       # Real clipboard round trips on runners whose clipboard is disposable.
-      PRIVATECOPY_CLIPBOARD_TESTS: ${{ matrix.os != 'ubuntu-22.04' && '1' || '0' }}
+      SCRUBBOARD_CLIPBOARD_TESTS: ${{ matrix.os != 'ubuntu-22.04' && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "${{ matrix.python }}" }
       - run: python -m pip install -e ".[dev]"
-      - run: ruff check privatecopy tests scripts installer
+      - run: ruff check scrubboard tests scripts installer
       - run: pytest -q
 
   recall:
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
       - run: python -m pip install -e .
-      - run: privatecopy download-model --ner openmed-44m
+      - run: scrubboard download-model --ner openmed-44m
       - run: python scripts/eval_recall.py --ner openmed-44m --fail-on-miss
 
   build:
@@ -44,12 +44,12 @@ jobs:
       matrix:
         os: [windows-latest, macos-14, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
+    env:
+      SCRUBBOARD_ALLOW_NO_MODEL: "1"  # smoke build only; release.yml bundles the model
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.11" }
       - run: python -m pip install -e . pyinstaller
-      - run: python installer/fetch_llama.py
-      - run: pyinstaller --noconfirm --clean installer/privatecopy.spec
-      - uses: actions/upload-artifact@v4
-        with: { name: "privatecopy-${{ matrix.os }}", path: dist/ }
+      - run: python installer/render_texts.py
+      - run: pyinstaller --noconfirm --clean installer/scrubboard.spec

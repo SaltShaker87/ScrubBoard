@@ -8,7 +8,7 @@ build/
 .DS_Store
 Thumbs.db
 # Local runtime data (models, config) - never commit real user data
-.privatecopy-test/
+.scrubboard-test/
 # Installer staging / bundled runtime
 installer/build/
 installer/win/Output/
