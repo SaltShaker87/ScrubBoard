@@ -55,6 +55,8 @@ def app(monkeypatch, tmp_path):
     a = ScrubboardApp(ScrubboardConfig(ner_model="none"), backend=FakeBackend())
     a.pipeline.redact = lambda text: RedactionResult(text.upper(), {"NAME": 1}, ["rules"])
     a.controller._redact = a.pipeline.redact
+    # The controller's own notifier: without a tray, Windows falls back to a modal message box.
+    a.controller._notify = lambda title, msg: notes.append(msg)
     a.notes = notes
     a.start()
     yield a
@@ -90,7 +92,10 @@ def test_pause_timer_does_not_block_quit(app):
         t.cancel()
 
 
-def test_tray_left_click_cleans_clipboard(app):
+def test_tray_left_click_cleans_clipboard(app, monkeypatch):
+    if "pystray" not in sys.modules:
+        # Headless CI: the X11 backend fails on import without a display.
+        monkeypatch.setenv("PYSTRAY_BACKEND", "dummy")
     pystray = pytest.importorskip("pystray")
     from scrubboard.tray import TrayApp
 
