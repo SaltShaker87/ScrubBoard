@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import os
+import platform
 import sys
+import threading
 
 from scrubboard.notifications import attach_tray
 
@@ -46,6 +48,11 @@ class TrayApp:
     def refresh(self) -> None:
         icon = self._icon
         if icon is None:
+            return
+        if platform.system() == "Darwin" and threading.current_thread() is not threading.main_thread():
+            # AppKit kills the app if the status item is changed off the main thread.
+            from PyObjCTools import AppHelper
+            AppHelper.callAfter(self.refresh)
             return
         try:
             icon.icon = make_icon(self._color())

@@ -155,7 +155,8 @@ Each installer bundles the privacy detector (`installer/fetch_models.py`) and `l
   sign-in, turn off clipboard history) → install → finish. Signing is optional
   (`SIGNTOOL_ARGS`); unsigned builds show SmartScreen's "More info → Run anyway".
 * **macOS:** `installer/mac/build_pkg.sh` produces a signed, notarized `dist/Scrubboard.pkg`.
-  The macOS Installer shows welcome → disclaimer (Agree) → how to use it → install → done.
+  The macOS Installer shows welcome → how to use it → disclaimer (Agree) → install → done
+  (macOS always puts the Read Me page before the license).
   It needs **Developer ID Application** *and* **Developer ID Installer** certificates.
   `SKIP_NOTARIZE=1` is for local tests.
 * **Ubuntu:** `installer/linux/build_linux.sh` produces `dist/scrubboard_amd64.deb`, which

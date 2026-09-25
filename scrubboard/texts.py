@@ -20,9 +20,8 @@ WELCOME = [
     "Why this matters: AI assistants are now easy to reach. For example, OpenAI offers "
     "clinicians free access to an AI tool. It's easy to paste part of a patient note into "
     "one of these tools and accidentally share protected health information (PHI).",
-    "Scrubboard adds a safety step in between: copy the text, let Scrubboard clean it, "
-    "then paste. Diagnoses, medications and other clinical details are kept, so the text "
-    "is still useful.",
+    "Scrubboard adds a safety layer: Copy text, let Scrubboard clean it, then Paste. "
+    "PHI is removed.",
     "Everything happens on this computer. Scrubboard never sends your text anywhere, and "
     "it works without an internet connection.",
 ]
@@ -78,7 +77,8 @@ _STEPS = {
         "Select the text, right-click it, and choose Services, then "
         f"\"{SERVICE_TITLE}\". Or copy it as usual (⌘C), click the Scrubboard icon "
         "in the menu bar, and choose \"Clean my clipboard\".",
-        "A message tells you how many details were removed.",
+        "A small message appears in the top-right corner for a few seconds, telling you how "
+        "many details were removed.",
         "Paste (⌘V) where you want it. Read it before you send it.",
     ],
     "Linux": [

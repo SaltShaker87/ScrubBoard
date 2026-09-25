@@ -29,13 +29,20 @@ def attach_tray(icon) -> None:
 
 def notify(title: str, message: str) -> None:
     icon = _tray_icon
+    system = platform.system()
+    if icon is not None and system == "Darwin":
+        try:  # our own corner toast; osascript banners show as "Script Editor"
+            from scrubboard import macos_toast
+            macos_toast.show(title, message)
+            return
+        except Exception:
+            pass
     if icon is not None and getattr(icon, "HAS_NOTIFICATION", False):
         try:
             icon.notify(message, title)
             return
         except Exception:
             pass
-    system = platform.system()
     if icon is None and _holding and system == "Windows":
         _pending.append((title, message))
         return

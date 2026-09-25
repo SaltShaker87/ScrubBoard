@@ -8,13 +8,20 @@
 #   APPLE_INSTALLER_IDENTITY  "Developer ID Installer: Name (TEAMID)"    (signs the .pkg)
 #   APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD                          (notarytool)
 # SKIP_NOTARIZE=1 builds and signs without notarizing (local testing).
+# UNSIGNED=1 ad-hoc signs the app and leaves the .pkg unsigned (local testing, no certificates).
 set -euo pipefail
-APP_IDENTITY="${APPLE_DEVELOPER_IDENTITY:?set APPLE_DEVELOPER_IDENTITY}"
-PKG_IDENTITY="${APPLE_INSTALLER_IDENTITY:?set APPLE_INSTALLER_IDENTITY}"
+if [ "${UNSIGNED:-0}" = "1" ]; then
+  APP_IDENTITY="-"; SIGN_FLAGS=(); PKG_SIGN=(); SKIP_NOTARIZE=1
+else
+  APP_IDENTITY="${APPLE_DEVELOPER_IDENTITY:?set APPLE_DEVELOPER_IDENTITY}"
+  SIGN_FLAGS=(--options runtime --timestamp)
+  PKG_SIGN=(--sign "${APPLE_INSTALLER_IDENTITY:?set APPLE_INSTALLER_IDENTITY}")
+fi
 PY="${PYTHON:-python3}"
+PIP="${PIP:-$PY -m pip}"  # e.g. PIP="uv pip" for a uv-made venv
 BUILD="installer/build/mac"
 
-"$PY" -m pip install -e . pyinstaller
+$PIP install -e . pyinstaller
 VERSION="$("$PY" -c 'import scrubboard; print(scrubboard.__version__)')"
 "$PY" installer/fetch_llama.py
 "$PY" installer/fetch_models.py
@@ -25,8 +32,8 @@ find "$APP" -name llama-server -exec chmod +x {} +
 
 echo "-> codesign the app (nested code first)"
 find "$APP/Contents" -type f \( -name "*.dylib" -o -name "*.so" -o -name "llama-server" \) -print0 |
-  xargs -0 -n1 codesign --force --options runtime --timestamp --sign "$APP_IDENTITY"
-codesign --force --options runtime --timestamp --sign "$APP_IDENTITY" "$APP"
+  xargs -0 -n1 codesign --force ${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"} --sign "$APP_IDENTITY"
+codesign --force ${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"} --sign "$APP_IDENTITY" "$APP"
 codesign --verify --strict --verbose=2 "$APP"
 
 echo "-> component package"
@@ -43,7 +50,7 @@ cp installer/build/text/mac/*.html assets/pkg-background.png "$BUILD/resources/"
 sed "s/@ARCH@/$(uname -m)/" installer/mac/distribution.xml > "$BUILD/distribution.xml"
 PKG="dist/Scrubboard.pkg"
 productbuild --distribution "$BUILD/distribution.xml" --resources "$BUILD/resources" \
-  --package-path "$BUILD" --version "$VERSION" --sign "$PKG_IDENTITY" "$PKG"
+  --package-path "$BUILD" --version "$VERSION" ${PKG_SIGN[@]+"${PKG_SIGN[@]}"} "$PKG"
 
 if [ "${SKIP_NOTARIZE:-0}" != "1" ]; then
   echo "-> notarize"
