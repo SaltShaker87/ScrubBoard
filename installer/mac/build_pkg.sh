@@ -8,6 +8,7 @@
 #   APPLE_INSTALLER_IDENTITY  "Developer ID Installer: Name (TEAMID)"    (signs the .pkg)
 #   APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD                          (notarytool)
 # SKIP_NOTARIZE=1 builds and signs without notarizing (local testing).
+# NOTARY_PROFILE=<name> notarizes with credentials saved by `xcrun notarytool store-credentials`.
 # UNSIGNED=1 ad-hoc signs the app and leaves the .pkg unsigned (local testing, no certificates).
 set -euo pipefail
 if [ "${UNSIGNED:-0}" = "1" ]; then
@@ -31,8 +32,14 @@ APP="dist/Scrubboard.app"
 find "$APP" -name llama-server -exec chmod +x {} +
 
 echo "-> codesign the app (nested code first)"
-find "$APP/Contents" -type f \( -name "*.dylib" -o -name "*.so" -o -name "llama-server" \) -print0 |
-  xargs -0 -n1 codesign --force ${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"} --sign "$APP_IDENTITY"
+sign() { codesign --force ${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"} --sign "$APP_IDENTITY" "$@"; }
+# Every Mach-O file, whatever its name (e.g. Python.framework/Versions/3.11/Python has no
+# extension), then framework bundles, then the app itself.
+find "$APP/Contents" -type f -print0 | while IFS= read -r -d '' f; do
+  if file -b "$f" | grep -q "Mach-O"; then sign "$f"; fi
+done
+find "$APP/Contents" -type d -path "*.framework/Versions/*" -prune ! -name Current -print0 |
+  while IFS= read -r -d '' v; do sign "$v"; done
 codesign --force ${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"} --sign "$APP_IDENTITY" "$APP"
 codesign --verify --strict --verbose=2 "$APP"
 
@@ -54,8 +61,19 @@ productbuild --distribution "$BUILD/distribution.xml" --resources "$BUILD/resour
 
 if [ "${SKIP_NOTARIZE:-0}" != "1" ]; then
   echo "-> notarize"
-  xcrun notarytool submit "$PKG" --wait \
-    --apple-id "${APPLE_ID:?}" --team-id "${APPLE_TEAM_ID:?}" --password "${APPLE_APP_PASSWORD:?}"
+  if [ -n "${NOTARY_PROFILE:-}" ]; then  # xcrun notarytool store-credentials <name>
+    AUTH=(--keychain-profile "$NOTARY_PROFILE")
+  else
+    AUTH=(--apple-id "${APPLE_ID:?}" --team-id "${APPLE_TEAM_ID:?}" --password "${APPLE_APP_PASSWORD:?}")
+  fi
+  RESULT="$(xcrun notarytool submit "$PKG" --wait --output-format json "${AUTH[@]}" || true)"
+  echo "$RESULT"
+  if ! grep -q '"status" *: *"Accepted"' <<<"$RESULT"; then
+    ID="$(sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' <<<"$RESULT")"
+    [ -n "$ID" ] && xcrun notarytool log "$ID" "${AUTH[@]}"  # Apple's reasons
+    echo "Notarization failed." >&2
+    exit 1
+  fi
   xcrun stapler staple "$PKG"
 fi
 echo "OK: $PKG"
