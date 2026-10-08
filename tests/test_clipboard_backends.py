@@ -50,4 +50,13 @@ def _external_copy(text: str) -> None:
     if sys.platform == "darwin":
         subprocess.run(["pbcopy"], input=text.encode(), check=True)
     else:
-        subprocess.run(["powershell", "-NoProfile", "-Command", f"Set-Clipboard -Value '{text}'"], check=True)
+        # Set-Clipboard fails immediately if another process (e.g. our own watcher,
+        # still reading after the previous change) holds the clipboard open.
+        import time
+
+        cmd = ["powershell", "-NoProfile", "-Command", f"Set-Clipboard -Value '{text}'"]
+        for attempt in range(5):
+            if subprocess.run(cmd, capture_output=True).returncode == 0:
+                return
+            time.sleep(0.2 * (attempt + 1))
+        subprocess.run(cmd, check=True)
