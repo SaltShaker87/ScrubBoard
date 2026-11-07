@@ -58,6 +58,9 @@ def server(tmp_path):
 
 
 def test_engine_end_to_end_with_fake_server(server):
+    # Start under the normal startup timeout: the first Python launch on a fresh
+    # macOS runner can take longer than the 30 s request deadline below.
+    server.ensure_running()
     engine = LLMEngine(server, QWEN, "fake")
     ents = engine.predict("Seen by Zelda today; Zelda again.", deadline=time.monotonic() + 30)
     assert [(e.start, e.end, e.label) for e in ents] == [(8, 13, "FIRST_NAME"), (21, 26, "FIRST_NAME")]
